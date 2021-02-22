@@ -36,4 +36,12 @@ int main(int argc, char* argv[]) {
     pts_dst.push_back(Point2f(800, 830));
     pts_dst.push_back(Point2f(800, 52));
     Mat h = findHomography(pts_src, pts_dst);
+    Mat im_out;
+    warpPerspective(im_src, im_out, h, im_src.size());
+    //cout<<im_src.size();
+    //cout<<im_out.size();
+    //namedWindow("Homographic Frame", 2);
+    imshow("Homographic Frame",im_out);
+    waitKey(0);    
+    //destroyAllWindows();
 }
