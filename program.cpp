@@ -31,13 +31,14 @@ int main(int argc, char* argv[]) {
       imshow("Original Frame", im_src);
       waitKey(50);
     }
-    pts_dst.push_back(Point2f(472, 52));
-    pts_dst.push_back(Point2f(472, 830));
-    pts_dst.push_back(Point2f(800, 830));
-    pts_dst.push_back(Point2f(800, 52));
+    pts_dst.push_back(Point2f(0, 0));
+    pts_dst.push_back(Point2f(0, 778));
+    pts_dst.push_back(Point2f(328, 778));
+    pts_dst.push_back(Point2f(328, 0));
     Mat h = findHomography(pts_src, pts_dst);
     Mat im_out;
-    warpPerspective(im_src, im_out, h, im_src.size());
+    Size im_out_size(328,778);
+    warpPerspective(im_src, im_out, h, im_out_size);
     //cout<<im_src.size();
     //cout<<im_out.size();
     //namedWindow("Homographic Frame", 2);
