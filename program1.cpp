@@ -62,11 +62,23 @@ double calcDiff(Mat img1, Mat img2) {
 
 void printData(vector<double> &queue, vector<double> &dynamic) {
     double ma = 0;
-    for(double e : queue) ma = max(ma, e);
-    for(double &e: queue) e /= ma;
+    double mi = queue[0];
+    for(double e : queue) {
+        ma = max(ma, e);
+        mi= min(mi,e);
+    }
+    for(double &e: queue) {
+        e = (e-mi)/(ma-mi);
+    }
     ma = 0;
-    for(double e : dynamic) ma = max(ma, e);
-    for(double &e: dynamic) e /= ma;
+    mi = dynamic[0];
+    for(double e : dynamic) {
+        ma = max(ma, e);
+        mi= min(mi,e);
+    }
+    for(double &e: dynamic) {
+        e = (e-mi)/(ma-mi);
+    }
 
     cout << "Frame,Queue,Moving\n";
     for(int i = 0; i < queue.size(); i++) cout << i+1 << "," << queue[i] << "," << dynamic[i] << "\n";
