@@ -115,6 +115,7 @@ int main(int argc, char* argv[]) {
     vector<double> queue;
     vector<double> dynamic;
     int frame_number = 0;
+    
     Mat prev_frame;
 
     while(true) {

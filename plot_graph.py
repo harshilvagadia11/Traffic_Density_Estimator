@@ -3,5 +3,5 @@ import plotly.express as px
 
 df = pd.read_csv('out.csv')
 
-fig = px.line(df, x = 'Frame', y = 'Queue', title='queue')
+fig = px.line(df, x = 'Frame', y = 'Moving', title='queue')
 fig.show()
