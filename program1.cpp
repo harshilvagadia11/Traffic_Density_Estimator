@@ -45,19 +45,30 @@ Mat processImage(Mat frame) {
 }
 
 double calcDiff(Mat img1, Mat img2) {
-    Mat gray1, gray2;
+    // Mat gray1, gray2;
+    // cvtColor(img1, gray1, COLOR_BGR2GRAY);
+    // cvtColor(img2, gray2, COLOR_BGR2GRAY);
+    // int histSize = 256;
+    // float range[] = { 0, 256} ;
+    // const float* histRange = { range };
+    // bool uniform = true;
+    // bool accumulate = false;
+    // int channels[] = {0};
+    // Mat h1,h2;
+    // calcHist(&gray1, 1, channels, Mat(), h1, 1, &histSize, &histRange, uniform, accumulate);
+    // calcHist(&gray2, 1, channels, Mat(), h2, 1, &histSize, &histRange, uniform, accumulate);
+    // return compareHist(h1, h2, HISTCMP_BHATTACHARYYA);
+
+    // Mat delta, gray;
+    // absdiff(img1, img2, delta);
+    // cvtColor(delta, gray, COLOR_BGR2GRAY);
+    // return sum(gray)[0];
+
+    Mat gray1, gray2, delta;
     cvtColor(img1, gray1, COLOR_BGR2GRAY);
     cvtColor(img2, gray2, COLOR_BGR2GRAY);
-    int histSize = 256;
-    float range[] = { 0, 256} ;
-    const float* histRange = { range };
-    bool uniform = true;
-    bool accumulate = false;
-    int channels[] = {0};
-    Mat h1,h2;
-    calcHist(&gray1, 1, channels, Mat(), h1, 1, &histSize, &histRange, uniform, accumulate);
-    calcHist(&gray2, 1, channels, Mat(), h2, 1, &histSize, &histRange, uniform, accumulate);
-    return compareHist(h1, h2, HISTCMP_BHATTACHARYYA);
+    absdiff(gray1, gray2, delta);
+    return sum(delta)[0];
 }
 
 void printData(vector<double> &queue, vector<double> &dynamic) {
