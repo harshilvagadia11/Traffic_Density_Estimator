@@ -1,5 +1,5 @@
 #include <opencv2/opencv.hpp>
-#include <iostream>
+#include <bits/stdc++.h>
 
 using namespace cv;
 using namespace std;
@@ -10,14 +10,15 @@ vector<Point2f> pts_src;
 vector<Point2f> pts_dst;
 
 vector<Mat> frames;
-vector<double> queue;
+vector<double> Queue;
 vector<double> dynamic;
 vector<double> baseline_queue;
 vector<double> baseline_dynamic;
-int frame_number=0;
-int resolve=1;
-int x=5;
-bool print_data=false;
+int frame_number = 0;
+int resolve = 5;
+int x = 10;
+int space_threads = 4;
+bool print_data = false;
 
 void CallBackFunc(int event,int x,int y,int flags,void* userdata) {
     // Store the coordinates of corners of the road
@@ -52,12 +53,14 @@ Mat processImage(Mat frame) {
         Mat im_trans;
         warpPerspective(frame, im_trans, h, frame.size());
         empty = im_trans(Rect(472, 52, 328, 778));
+        resize(empty, empty, Size(empty.cols/resolve, empty.rows/resolve));
 
         return empty;
     } else {
         Mat im_trans;
         warpPerspective(frame, im_trans, h, frame.size());
         Mat processed = im_trans(Rect(472, 52, 328, 778));
+        resize(processed, processed, Size(processed.cols/resolve, processed.rows/resolve));
 
         return processed;
     }
@@ -81,7 +84,7 @@ void get_frames(string video){
     VideoCapture cap(video);
 
     if(!cap.isOpened()) {
-        cout << "Error opening video file " << argv[1] << "\n";
+        cout << "Error opening video file " << video << "\n";
         exit(1);
     }
 
@@ -94,66 +97,125 @@ void get_frames(string video){
     }
 }
 
-void every_x(){
+void every_x() {
     Mat prev_frame;
-    for(int i=0;i<frame_number;i++){
-        if (i%x==0){
-            prev_frame=processImage(frames[i]);
+    for(int i = 0;i < frame_number; i++){
+        if (i%x == 0){
+            prev_frame = processImage(frames[i]);
         }
-        frames[i]=prev_frame;
+        frames[i] = prev_frame;
     }
 }
 
-void resolution(){
-    for(int i=0;i<frame_number;i++){                                // %x ?
-        frames[i]=prev_frame;
-        resize(frames[i],frames[i],Size(frames[i].cols/resolve,frames[i].rows/resolve));    // to take double value in size?
+void normalise(vector<double> &vec) {
+    double ma = 0;
+    double mi = vec[0];
+    for(double e : vec) {
+        ma = max(ma, e);
+        mi= min(mi,e);
+    }
+    for(double &e: vec) {
+        e = (e-mi)/(ma-mi);
     }
 }
 
-void get_density(){
+struct thread_data {
+   int c;
+   int r;
+};
+
+
+void *cal_density(void *threadarg) {
+    struct thread_data *my_data;
+    my_data = (struct thread_data *) threadarg;
+    int c = my_data->c;
+    int r = my_data->r;
 
     double diff;
     double dyn_diff;
 
     Mat prev_frame;
-    
-    for(int i=0;i<frame_number;i++){
-        if (i%x==0){
-            diff = calcDiff(frames[i], empty);  
+
+    for(int i = 0; i < frame_number; i++) {
+        if (i%x == 0) {
+            int cols = frames[i].cols/space_threads;
+            int rows = frames[i].rows/space_threads;
+            Mat temp1 = frames[i](Rect(c*cols, r*rows, cols, rows));
+            Mat temp2 = empty(Rect(c*cols, r*rows, cols, rows));
+            Mat temp3;
+            if(i != 0) temp3 = prev_frame(Rect(c*cols, r*rows, cols, rows));
+            diff = calcDiff(temp1, temp2);  
             if(i == 0) dyn_diff = 0.0;
-            else dyn_diff = calcDiff(frame, prev_frame);  
-            prev_frame=frames[i];
+            else dyn_diff = calcDiff(temp1, temp3);  
+            prev_frame = frames[i];
         }    
-        queue.push_back(diff);
-        dynamic.push_back(dyn_diff);  
+        Queue[i] += diff;
+        dynamic[i] += dyn_diff;
     }
+    // cout << "Exiting thread: " << c << " " << r << "\n";
+    pthread_exit(NULL);
 }
 
-void get_baseline(string file){                                   // get baseline queue and dyn vector from csv
-    fstream fin;
-  
-    fin.open(file, ios::in);
+void get_density() {
+
+    for(int i = 0; i < frame_number; i++) {Queue.push_back(0); dynamic.push_back(0);}
+
+    pthread_t threads[space_threads][space_threads];
+    pthread_attr_t attr;
+    void *status;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    for(int i = 0; i < space_threads; i++) {
+        for(int j = 0; j < space_threads; j++) {
+            struct thread_data td;
+            td.c = i; td.r = j;
+            int rc = pthread_create(&threads[i][j], &attr, cal_density, (void *)&td);
+            if (rc) {
+                cout << "Error:unable to create thread," << rc << endl;
+                exit(-1);
+            }
+        }
+    }
+    pthread_attr_destroy(&attr);
+
+    for(int i = 0; i < space_threads; i++) {
+        for(int j = 0; j < space_threads; j++) {
+            int rc = pthread_join(threads[i][j], &status);
+            if (rc) {
+                cout << "Error:unable to join," << rc << endl;
+                exit(-1);
+            }
+        }
+    }
+
+    normalise(Queue);
+    normalise(dynamic);
+}
+
+void get_baseline(string file_name) {
+    // get baseline Queue and dyn vector from csv
+    ifstream fin(file_name);
   
     int count = 0;
   
     vector<string> row;
-    string line, word, temp;
+    string line, word;
   
-    while (fin >> temp) {
+    while (getline(fin, line)) {
   
         row.clear();
   
         // read an entire row and
         // store it in a string variable 'line'
-        getline(fin, line);
+        
   
         // used for breaking words
         stringstream s(line);
   
         // read every column data of a row and
         // store it in a string variable, 'word'
-        while (getline(s, word, ', ')) {
+        while (getline(s, word, ',')) {
   
             // add all the column data
             // of a row to a vector
@@ -161,22 +223,22 @@ void get_baseline(string file){                                   // get baselin
         }
 
         count++;
-        if (count==1) continue;
-        baseline_queue.push_back(stoi(row[1]));
-        baseline_dynamic.push_back(stoi(row[2]));
+        if (count == 1) continue;
+        baseline_queue.push_back(stold(row[1]));
+        baseline_dynamic.push_back(stold(row[2]));
 
     }
     
 }
 
 void utility_cal(){
-    double utility_queue=0,utility_dynamic=0;                                     // should we normalise the data for queue and density like in baseline?
-    for(int i=0;i<frame_number;i++){
-        utility_queue+=((queue[i]-baseline_queue[i])*(queue[i]-baseline_queue[i]))/baseline_queue[i];        // is this division good?
-        utility_dynamic+=((dynamic[i]-baseline_dynamic[i])*(dynamic[i]-baseline_dynamic[i]))/baseline_dynamic[i];
+    double utility_queue = 0, utility_dynamic = 0;                                     // should we normalise the data for queue and density like in baseline?
+    for(int i = 0;i < frame_number; i++){
+        utility_queue+=((Queue[i]-baseline_queue[i])*(Queue[i]-baseline_queue[i]));        // is this division good?
+        utility_dynamic+=((dynamic[i]-baseline_dynamic[i])*(dynamic[i]-baseline_dynamic[i]));
     }    
-    utility_queue=utility_queue/frame_number;
-    utility_dynamic=utility_dynamic/frame_number;
+    utility_queue = utility_queue/frame_number;
+    utility_dynamic = utility_dynamic/frame_number;
 
     cout << "Utility of queue is : " << fixed << utility_queue << setprecision(5);
     cout<<"\n";
@@ -188,56 +250,36 @@ void utility_cal(){
 void printData() {
     // Normalise and print data
 
-    double ma = 0;
-    double mi = queue[0];
-    for(double e : queue) {
-        ma = max(ma, e);
-        mi= min(mi,e);
-    }
-    for(double &e: queue) {
-        e = (e-mi)/(ma-mi);
-    }
-    ma = 0;
-    mi = dynamic[0];
-    for(double e : dynamic) {
-        ma = max(ma, e);
-        mi= min(mi,e);
-    }
-    for(double &e: dynamic) {
-        e = (e-mi)/(ma-mi);
-    }
-
     cout << "Frame,Queue,Moving\n";
-    for(int i = 0; i < frames.size(); i++) cout << i << "," << queue[i] << "," << dynamic[i] << "\n";
+    for(int i = 0; i < frames.size(); i++) cout << i << "," << Queue[i] << "," << dynamic[i] << "\n";
 }
-
-
 
 int main(int argc, char* argv[]) {
 
     time_t start, end;
+    double time_taken;
     time(&start);
 
-    if(argc < 3) {
-        cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
-        exit(1);
-    } else if(argc > 8) {
-        cout << "Warning: More than three arguments provided\n";             // ./part3 <video> <empty_frame> xrd x r d baseline.csv     
-    }
+    // if(argc < 3) {
+    //     cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
+    //     exit(1);
+    // } else if(argc > 8) {
+    //     cout << "Warning: More than three arguments provided\n";             // ./part3 <video> <empty_frame> xrd x r d baseline.csv     
+    // }
 
-    get_baseline(argv[argc-1]);
+    // get_baseline(argv[argc-1]);
 
     
-    if (argc>=4){
-        string arg=argv[3];
-        if (arg=="x") x=stoi(argv[4]);
-        else if (arg=="r") resolve=stoi(argv[4]);
-        else if (arg=="d") print_data=true;
-        else if (arg=="xr") x=stoi(argv[4]),resolve=stoi(argv[5]);
-        else if (arg=="xd") x=stoi(argv[4]),print_data=true;
-        else if (arg=="rd") resolve=stoi(argv[4]),print_data=true;
-        else if (arg=="xrd") x=stoi(argv[3]),resolve=stoi(argv[4]),print_data=true;
-    }
+    // if (argc>=4){
+    //     string arg=argv[3];
+    //     if (arg=="x") x=stoi(argv[4]);
+    //     else if (arg=="r") resolve=stoi(argv[4]);
+    //     else if (arg=="d") print_data=true;
+    //     else if (arg=="xr") x=stoi(argv[4]),resolve=stoi(argv[5]);
+    //     else if (arg=="xd") x=stoi(argv[4]),print_data=true;
+    //     else if (arg=="rd") resolve=stoi(argv[4]),print_data=true;
+    //     else if (arg=="xrd") x=stoi(argv[3]),resolve=stoi(argv[4]),print_data=true;
+    // }
 
     Mat im_src = imread(argv[2]);
     if(im_src.empty()) {
@@ -249,15 +291,15 @@ int main(int argc, char* argv[]) {
 
     get_frames(argv[1]);
     every_x();
-    resolution();
     get_density();
+    get_baseline("baseline.csv");
 
     utility_cal();
 
     if (print_data) printData();
 
     time(&end);
-    double time_taken = double(end - start);
+    time_taken = double(end - start);
     cout << "Time taken by program is : " << fixed << time_taken << setprecision(5);
     cout << " sec " << endl;
 
