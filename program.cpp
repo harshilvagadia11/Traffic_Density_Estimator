@@ -22,15 +22,7 @@ int time_threads = 5;
 bool space_opt = false;
 bool print_data = false;
 
-void CallBackFunc(int event,int x,int y,int flags,void* userdata) {
-    // Store the coordinates of corners of the road
 
-    if(event==EVENT_LBUTTONDOWN) {
-        pts_src.push_back(Point2f(x,y));
-        if(pts_src.size() == 4) finished = true;
-        return;
-    }
-}
 
 Mat processImage(Mat frame) {
     // Transform and crop the frame to a perpendicular view
@@ -38,14 +30,11 @@ Mat processImage(Mat frame) {
     if(pts_src.size() != 4) {
         // If corner coordinates are not stored, take input from the user
 
-        namedWindow("Original Frame", 1);
-        setMouseCallback("Original Frame", CallBackFunc, nullptr);
-        finished = false;
-        while(!finished){
-            imshow("Original Frame", frame);
-            waitKey(50);
-        }
-
+        pts_src.push_back(Point2f(977, 225));   
+        pts_src.push_back(Point2f(408, 990));
+        pts_src.push_back(Point2f(1519, 993));
+        pts_src.push_back(Point2f(1271, 218));
+        
         pts_dst.push_back(Point2f(472, 52));
         pts_dst.push_back(Point2f(472, 830));
         pts_dst.push_back(Point2f(800, 830));
