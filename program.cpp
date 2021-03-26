@@ -1,5 +1,11 @@
 #include <opencv2/opencv.hpp>
 #include <bits/stdc++.h>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include "json.hpp"
+
+using json = nlohmann::json;
+namespace pt = boost::property_tree;
 
 using namespace cv;
 using namespace std;
@@ -15,12 +21,12 @@ vector<double> dynamic;
 vector<double> baseline_queue;
 vector<double> baseline_dynamic;
 int frame_number = 0;
-int resolve = 1;
-int x = 5;
-int space_threads = 1;
-int time_threads = 5;
-bool space_opt = false;
-bool print_data = false;
+int resolve;
+int x;
+int space_threads;
+int time_threads;
+bool space_opt;
+bool print_data;
 
 
 
@@ -286,32 +292,31 @@ void printData() {
     for(int i = 0; i < frame_number; i++) cout << i << "," << Queue[i] << "," << dynamic[i] << "\n";
 }
 
+void load_parameters(string filename) {
+    pt::ptree config;
+    pt::read_json(filename, config);
+    x = config.get<int>("x");
+    resolve = config.get<int>("resolve");
+    space_threads = config.get<int>("space_threads");
+    time_threads = config.get<int>("time_threads");
+    space_opt = config.get<bool>("space_opt");
+    print_data = config.get<bool>("print_data");
+}
+
 int main(int argc, char* argv[]) {
 
     time_t start, end;
     double time_taken;
     time(&start);
 
-    // if(argc < 3) {
-    //     cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
-    //     exit(1);
-    // } else if(argc > 8) {
-    //     cout << "Warning: More than three arguments provided\n";             // ./part3 <video> <empty_frame> xrd x r d baseline.csv     
-    // }
+    if(argc < 3) {
+        cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
+        exit(1);
+    } else if(argc > 3) {
+        cout << "Warning: More than three arguments provided\n";     
+    }
 
-    // get_baseline(argv[argc-1]);
-
-    
-    // if (argc>=4){
-    //     string arg=argv[3];
-    //     if (arg=="x") x=stoi(argv[4]);
-    //     else if (arg=="r") resolve=stoi(argv[4]);
-    //     else if (arg=="d") print_data=true;
-    //     else if (arg=="xr") x=stoi(argv[4]),resolve=stoi(argv[5]);
-    //     else if (arg=="xd") x=stoi(argv[4]),print_data=true;
-    //     else if (arg=="rd") resolve=stoi(argv[4]),print_data=true;
-    //     else if (arg=="xrd") x=stoi(argv[3]),resolve=stoi(argv[4]),print_data=true;
-    // }
+    load_parameters("config.json");
 
     Mat im_src = imread(argv[2]);
     if(im_src.empty()) {
