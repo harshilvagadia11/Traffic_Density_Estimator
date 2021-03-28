@@ -28,7 +28,7 @@ int time_threads;
 bool space_opt;
 bool print_data;
 
-
+ofstream outfile;
 
 Mat processImage(Mat frame) {
     // Transform and crop the frame to a perpendicular view
@@ -283,6 +283,8 @@ void utility_cal(){
     cout << "Utility of dynamic is : " << fixed << utility_dynamic << setprecision(5);
     cout<<"\n";
 
+    outfile<< fixed << setprecision(5) << utility_queue << "," << utility_dynamic << ",";
+
 }
 
 void printData() {
@@ -317,12 +319,16 @@ int main(int argc, char* argv[]) {
     }
 
     load_parameters("config.json");
+    
+    outfile.open("trade_off.csv", ios::app);  // append mode
 
     Mat im_src = imread(argv[2]);
     if(im_src.empty()) {
         cout << "Error reading image " << argv[2] << "\n";
         exit(1);
     }
+
+    
     processImage(im_src);
     destroyAllWindows();
 
@@ -335,8 +341,10 @@ int main(int argc, char* argv[]) {
     if (print_data) printData();
 
     time(&end);
-    time_taken = double(end - start);
+    time_taken = double(end - start);  
     cout << "Time taken by program is : " << fixed << time_taken << setprecision(5);
+
+    outfile<< fixed << setprecision(5) << time_taken << "\n";
     cout << " sec " << endl;
 
 }
