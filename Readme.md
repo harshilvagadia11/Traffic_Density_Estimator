@@ -6,5 +6,7 @@ The empty image will be shown. Select the four corners of the road. The video wi
 <br/>
 Install dependenices: `pip3 install pandas plotly` <br/>
 Displaying graph: `python3 plot_graph.py <output_file>` </br>
+Install mpstat: `sudo apt install sysstat` <br/>
+
 
 Remove executable: `make clean` <br/>
