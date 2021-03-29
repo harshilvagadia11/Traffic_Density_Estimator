@@ -136,8 +136,11 @@ void *cal_density_space(void *threadarg) {
         if(i == 0) dyn_diff = 0.0;
         else dyn_diff = calcDiff(temp1, temp3);  
         prev_frame = frames[i];   
+        mutex m;
+        m.lock();
         Queue[i] += diff;
         dynamic[i] += dyn_diff;
+        m.unlock();
     }
     pthread_exit(NULL);
 }

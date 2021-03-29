@@ -16,8 +16,8 @@ def set_param(x,resolve,space_threads,time_threads,space_opt,print_data):
         json.dump(data,json_file)
 
 data = []
-for i in [1,2,3,4,5]:
-    set_param(5, i, 1, 1, False, False)
+for i in [5]:
+    set_param(5, i, 5, 1, False, False)
     process = subprocess.Popen(["./program", "trafficvideo.mp4", "empty.jpg"], stdout = subprocess.PIPE, universal_newlines = True)
     lines = process.stdout.readlines()
     lines = [line.rstrip("\n") for line in lines]
