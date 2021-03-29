@@ -76,6 +76,9 @@ double calcDiff(Mat img1, Mat img2) {
 
 
 void get_frames(string video){
+
+    //cout << "Getting frames\n";
+
     VideoCapture cap(video);
 
     if(!cap.isOpened()) {
@@ -223,6 +226,8 @@ void get_density_time() {
 
 void get_density() {
 
+    //cout << "Getting Density\n";
+
     for(int i = 0; i < frame_number; i++) {Queue.push_back(0); dynamic.push_back(0);}
 
     if(space_opt) get_density_space();
@@ -308,6 +313,8 @@ void load_parameters(string filename) {
 }
 
 int main(int argc, char* argv[]) {
+
+    //cout << "Start\n";
 
     auto start = std::chrono::high_resolution_clock::now();
 
