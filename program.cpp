@@ -259,7 +259,7 @@ void get_baseline(string file_name) {
         }
 
         count++;
-        if (count == 1 || count%x != 2%x) continue;
+        if (count == 1) continue;
         baseline_queue.push_back(stold(row[1]));
         baseline_dynamic.push_back(stold(row[2]));
 
@@ -269,12 +269,17 @@ void get_baseline(string file_name) {
 
 void utility_cal(){
     double utility_queue = 0, utility_dynamic = 0;
-    for(int i = 0;i < frame_number; i++){
-        utility_queue+=((Queue[i]-baseline_queue[i])*(Queue[i]-baseline_queue[i]));
-        utility_dynamic+=((dynamic[i]-baseline_dynamic[i])*(dynamic[i]-baseline_dynamic[i]));
+    int count = 0;
+    for(int i = 0; i < frame_number; i++) {
+        for(int j = 0; j < x; j++) {
+            if(i*x+j >= baseline_queue.size()) break;
+            utility_queue+=((Queue[i]-baseline_queue[i*x+j])*(Queue[i]-baseline_queue[i*x+j]));
+            utility_dynamic+=((dynamic[i]-baseline_dynamic[i*x+j])*(dynamic[i]-baseline_dynamic[i*x+j]));
+            count++;
+        }
     }    
-    utility_queue = utility_queue/frame_number;
-    utility_dynamic = utility_dynamic/frame_number;
+    utility_queue = sqrt(utility_queue/count);
+    utility_dynamic = sqrt(utility_dynamic/count);
 
     cout << fixed << utility_queue << setprecision(5) << "\n";
     cout << fixed << utility_dynamic << setprecision(5) << "\n";
@@ -301,9 +306,7 @@ void load_parameters(string filename) {
 
 int main(int argc, char* argv[]) {
 
-    time_t start, end;
-    double time_taken;
-    time(&start);
+    auto start = std::chrono::high_resolution_clock::now();
 
     if(argc < 3) {
         cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
@@ -332,8 +335,9 @@ int main(int argc, char* argv[]) {
 
     if (print_data) printData();
 
-    time(&end);
-    time_taken = double(end - start);  
-    cout << fixed << time_taken << setprecision(5) << "\n";
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+    
+    cout << ((long double)duration.count())/((long double) 1e9) << "\n";
 
 }
