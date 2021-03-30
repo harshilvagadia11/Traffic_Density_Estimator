@@ -19,9 +19,9 @@ def set_param(x, resolve, space_threads, time_threads, space_opt, print_data):
 data = []
 data_param_error=[]
 data_param_time=[]
-for i in [5,6,7,8,9]:
+for i in [1,2,3,4,5,6,7,8,9,10]:
     print("Processing i = " + str(i))
-    set_param(i, 1, 1, 1, False, False)
+    set_param(5, 1, 1, i, False, False)
     process = subprocess.Popen(["./program", "trafficvideo.mp4", "empty.jpg"], stdout = subprocess.PIPE, universal_newlines = True)
     lines = process.stdout.readlines()
     lines = [line.rstrip("\n") for line in lines]
@@ -36,20 +36,20 @@ def plot_param_error():
     df = pd.DataFrame(data_param_error, columns = ["Param", "Queue", "Dynamic"])
     print(df)
     # df = df.sort_values(by = "Runtime")
-    fig = px.line(df, x = "Param", y = ["Queue", "Dynamic"] , title = "#1 param_error")
+    fig = px.line(df, x = "Param", y = ["Queue", "Dynamic"] , title = "#3 param_error")
     fig.show()
     
 def plot_param_time():
     df = pd.DataFrame(data_param_time, columns = ["Param", "Runtime"])
     print(df)
     # df = df.sort_values(by = "Runtime")
-    fig = px.line(df, x = "Param", y = "Runtime" , title = "#2 param_time")
+    fig = px.line(df, x = "Param", y = "Runtime" , title = "#3 param_time")
     fig.show()
 
 def plot_error_time():
     df = pd.DataFrame(data, columns = ["Queue", "Dynamic", "Runtime"])
+    df = df.sort_values(by = "Runtime")
     print(df)
-    # df = df.sort_values(by = "Runtime")
     fig = px.line(df, x = "Runtime", y = ["Queue", "Dynamic"], title = "#3 error_time")
     fig.show()
 
