@@ -275,22 +275,22 @@ void get_baseline(string file_name) {
     
 }
 
-void utility_cal(){
-    double utility_queue = 0, utility_dynamic = 0;
+void error_cal(){
+    double error_queue = 0, error_dynamic = 0;
     int count = 0;
     for(int i = 0; i < frame_number; i++) {
         for(int j = 0; j < x; j++) {
             if(i*x+j >= baseline_queue.size()) break;
-            utility_queue+=((Queue[i]-baseline_queue[i*x+j])*(Queue[i]-baseline_queue[i*x+j]));
-            utility_dynamic+=((dynamic[i]-baseline_dynamic[i*x+j])*(dynamic[i]-baseline_dynamic[i*x+j]));
+            error_queue+=((Queue[i]-baseline_queue[i*x+j])*(Queue[i]-baseline_queue[i*x+j]));
+            error_dynamic+=((dynamic[i]-baseline_dynamic[i*x+j])*(dynamic[i]-baseline_dynamic[i*x+j]));
             count++;
         }
     }    
-    utility_queue = sqrt(utility_queue/count);
-    utility_dynamic = sqrt(utility_dynamic/count);
+    error_queue = sqrt(error_queue/count);
+    error_dynamic = sqrt(error_dynamic/count);
 
-    cout << fixed << utility_queue << setprecision(5) << "\n";
-    cout << fixed << utility_dynamic << setprecision(5) << "\n";
+    cout << fixed << error_queue << setprecision(5) << "\n";
+    cout << fixed << error_dynamic << setprecision(5) << "\n";
 
 }
 
@@ -339,7 +339,7 @@ int main(int argc, char* argv[]) {
     auto stop = std::chrono::high_resolution_clock::now();
     get_baseline("baseline.csv");
 
-    utility_cal();
+    error_cal();
 
     if (print_data) printData();
 

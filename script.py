@@ -17,7 +17,7 @@ def set_param(x, resolve, space_threads, time_threads, space_opt, print_data):
 
 
 data = []
-data_param_util=[]
+data_param_error=[]
 data_param_time=[]
 for i in [5,6,7,8,9]:
     print("Processing i = " + str(i))
@@ -27,16 +27,16 @@ for i in [5,6,7,8,9]:
     lines = [line.rstrip("\n") for line in lines]
     lines = [float(line) for line in lines]
     data.append(lines)
-    data_param_util.append([i,lines[0],lines[1]])
+    data_param_error.append([i,lines[0],lines[1]])
     data_param_time.append([i,lines[2]])
     
     
 
-def plot_param_util():
-    df = pd.DataFrame(data_param_util, columns = ["Param", "Queue", "Dynamic"])
+def plot_param_error():
+    df = pd.DataFrame(data_param_error, columns = ["Param", "Queue", "Dynamic"])
     print(df)
     # df = df.sort_values(by = "Runtime")
-    fig = px.line(df, x = "Param", y = ["Queue", "Dynamic"] , title = "#1 param_util")
+    fig = px.line(df, x = "Param", y = ["Queue", "Dynamic"] , title = "#1 param_error")
     fig.show()
     
 def plot_param_time():
@@ -46,13 +46,13 @@ def plot_param_time():
     fig = px.line(df, x = "Param", y = "Runtime" , title = "#2 param_time")
     fig.show()
 
-def plot_util_time():
+def plot_error_time():
     df = pd.DataFrame(data, columns = ["Queue", "Dynamic", "Runtime"])
     print(df)
     # df = df.sort_values(by = "Runtime")
-    fig = px.line(df, x = "Runtime", y = ["Queue", "Dynamic"], title = "#3 util_time")
+    fig = px.line(df, x = "Runtime", y = ["Queue", "Dynamic"], title = "#3 error_time")
     fig.show()
 
-plot_util_time()
+plot_error_time()
 plot_param_time()
-plot_param_util()
+plot_param_error()
