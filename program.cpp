@@ -314,10 +314,6 @@ void load_parameters(string filename) {
 
 int main(int argc, char* argv[]) {
 
-    //cout << "Start\n";
-
-    auto start = std::chrono::high_resolution_clock::now();
-
     if(argc < 3) {
         cout << "Error: No input video and/or image provided\n Please execute as ./part3 <video> <empty_frame>\n";
         exit(1);
@@ -338,14 +334,15 @@ int main(int argc, char* argv[]) {
     destroyAllWindows();
 
     get_frames(argv[1]);
+    auto start = std::chrono::high_resolution_clock::now();
     get_density();
+    auto stop = std::chrono::high_resolution_clock::now();
     get_baseline("baseline.csv");
 
     utility_cal();
 
     if (print_data) printData();
 
-    auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
     
     cout << ((long double)duration.count())/((long double) 1e9) << "\n";
