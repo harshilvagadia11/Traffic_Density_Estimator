@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 
 def set_param(x, resolve, space_threads, time_threads, space_opt, print_data):
-    data={
+    data = {
         "x": x,
         "resolve": resolve,
         "space_threads": space_threads,
@@ -12,17 +12,16 @@ def set_param(x, resolve, space_threads, time_threads, space_opt, print_data):
         "space_opt": space_opt,
         "print_data": print_data
     }
-    with open("config.json", "w") as json_file:
+    with open("../code/config.json", "w") as json_file:
         json.dump(data,json_file)
-
 
 data = []
 data_param_error=[]
 data_param_time=[]
-for i in [1,2,3,4,5,6,7,8,9,10]:
+for i in [1,2,3,4,5]:
     print("Processing i = " + str(i))
     set_param(5, 1, 1, i, False, False)
-    process = subprocess.Popen(["./program", "trafficvideo.mp4", "empty.jpg"], stdout = subprocess.PIPE, universal_newlines = True)
+    process = subprocess.Popen(["./program", "trafficvideo.mp4", "empty.jpg"], stdout = subprocess.PIPE, universal_newlines = True, cwd = "../code/")
     lines = process.stdout.readlines()
     lines = [line.rstrip("\n") for line in lines]
     lines = [float(line) for line in lines]

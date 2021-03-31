@@ -10,16 +10,20 @@ namespace pt = boost::property_tree;
 using namespace cv;
 using namespace std;
 
+// Image processing parameters
 bool finished;
 Mat h, empty_frame;
 vector<Point2f> pts_src;
 vector<Point2f> pts_dst;
 
+// Storage vectors
 vector<Mat> frames;
 vector<double> Queue;
 vector<double> dynamic;
 vector<double> baseline_queue;
 vector<double> baseline_dynamic;
+
+// Method parameters
 int frame_number = 0;
 int resolve;
 int x;
@@ -32,7 +36,7 @@ Mat processImage(Mat frame) {
     // Transform and crop the frame to a perpendicular view
 
     if(pts_src.size() != 4) {
-        // If corner coordinates are not stored, take input from the user
+        // The road corners are hard-coded
 
         pts_src.push_back(Point2f(977, 225));   
         pts_src.push_back(Point2f(408, 990));
@@ -72,12 +76,8 @@ double calcDiff(Mat img1, Mat img2) {
     return sum(delta)[0];
 }
 
-
-
-
 void get_frames(string video){
-
-    //cout << "Getting frames\n";
+    // Get and store the frames from the video
 
     VideoCapture cap(video);
 
@@ -100,6 +100,8 @@ void get_frames(string video){
 }
 
 void normalise(vector<double> &vec) {
+    // Normalise a vector setting the max value as 1 and min value as 0
+
     double ma = 0;
     double mi = vec[0];
     for(double e : vec) {
@@ -118,6 +120,8 @@ struct thread_data {
 
 
 void *cal_density_space(void *threadarg) {
+    // The thread processes a part of a frame
+
     struct thread_data *my_data;
     my_data = (struct thread_data *) threadarg;
     int c = my_data->c;
@@ -149,6 +153,7 @@ void *cal_density_space(void *threadarg) {
 }
 
 void get_density_space() {
+    // Create the treads and then join them once the work is done for method 3
 
     pthread_t threads[space_threads][space_threads];
     pthread_attr_t attr;
@@ -181,6 +186,8 @@ void get_density_space() {
 }
 
 void *cal_density_time(void *threadid) {
+    // The thread processes a part of the video
+
     int off = static_cast<int>(reinterpret_cast<intptr_t>(threadid)); 
 
     double diff;
@@ -200,6 +207,8 @@ void *cal_density_time(void *threadid) {
 }
 
 void get_density_time() {
+    // Create the treads and then join them once the work is done for method 4
+
     pthread_t threads[time_threads];
     pthread_attr_t attr;
     void *status;
@@ -225,8 +234,7 @@ void get_density_time() {
 }
 
 void get_density() {
-
-    //cout << "Getting Density\n";
+    // Initialise Queue and dynamic vectors, make calls to relevant functions and then normalise Queue and dynamic
 
     for(int i = 0; i < frame_number; i++) {Queue.push_back(0); dynamic.push_back(0);}
 
@@ -239,30 +247,18 @@ void get_density() {
 
 void get_baseline(string file_name) {
     // get baseline Queue and dyn vector from csv
+
     ifstream fin(file_name);
-  
     int count = 0;
   
     vector<string> row;
     string line, word;
   
     while (getline(fin, line)) {
-  
         row.clear();
-  
-        // read an entire row and
-        // store it in a string variable 'line'
-        
-  
-        // used for breaking words
         stringstream s(line);
-  
-        // read every column data of a row and
-        // store it in a string variable, 'word'
+
         while (getline(s, word, ',')) {
-  
-            // add all the column data
-            // of a row to a vector
             row.push_back(word);
         }
 
@@ -275,7 +271,9 @@ void get_baseline(string file_name) {
     
 }
 
-void error_cal(){
+void error_cal() {
+    // Calculate error for both queue and dynamic density using the baseline as reference
+
     double error_queue = 0, error_dynamic = 0;
     int count = 0;
     for(int i = 0; i < frame_number; i++) {
@@ -289,8 +287,10 @@ void error_cal(){
     error_queue = sqrt(error_queue/count);
     error_dynamic = sqrt(error_dynamic/count);
 
-    cout << fixed << error_queue << setprecision(5) << "\n";
-    cout << fixed << error_dynamic << setprecision(5) << "\n";
+    if(!print_data) {
+        cout << fixed << error_queue << setprecision(5) << "\n";
+        cout << fixed << error_dynamic << setprecision(5) << "\n";
+    }
 
 }
 
@@ -302,6 +302,8 @@ void printData() {
 }
 
 void load_parameters(string filename) {
+    // Reads the parameters from the JSON input file
+
     pt::ptree config;
     pt::read_json(filename, config);
     x = config.get<int>("x");
@@ -345,6 +347,6 @@ int main(int argc, char* argv[]) {
 
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
     
-    cout << ((long double)duration.count())/((long double) 1e9) << "\n";
+    if(!print_data) cout << ((long double)duration.count())/((long double) 1e9) << "\n";
 
 }
